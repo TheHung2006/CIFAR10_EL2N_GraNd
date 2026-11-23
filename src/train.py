@@ -13,6 +13,16 @@ from model import get_model
 from evaluate import evaluate
 from checkpoint import set_seed, save_checkpoint, load_checkpoint, get_random_states
 
+def get_selection_time(method, size, coresets_dir="./results/coresets"):
+    """Lấy thời gian chọn coreset từ coreset_selection_time.csv."""
+    time_csv = os.path.join(coresets_dir, "coreset_selection_time.csv")
+    if os.path.exists(time_csv):
+        df = pd.read_csv(time_csv)
+        row = df[(df["method"].str.lower() == method.lower()) & (df["size"] == size)]
+        if not row.empty:
+            return float(row.iloc[0]["time_sec"])
+    return 0.0
+
 def train_coreset_run(
     method="el2n",
     size=5000,
@@ -43,6 +53,7 @@ def train_coreset_run(
     set_seed(seed)
 
     # 2. Nạp danh sách index coreset
+    selection_time = get_selection_time(method, size, coresets_dir=coresets_dir)
     if method == "full":
         subset_indices = None
         print(f"--> Sử dụng toàn bộ 50.000 ảnh (Full Data)")
@@ -51,7 +62,7 @@ def train_coreset_run(
         if not os.path.exists(coreset_file):
             raise FileNotFoundError(f"Không tìm thấy file coreset: {coreset_file}")
         subset_indices = np.load(coreset_file)
-        print(f"--> Đã nạp {len(subset_indices)} index từ: {coreset_file}")
+        print(f"--> Đã nạp {len(subset_indices)} index từ: {coreset_file} (Thời gian chọn mẫu: {selection_time:.4f}s)")
 
     # Đảm bảo batch_size không lớn hơn kích thước coreset
     effective_batch_size = min(batch_size, size) if size > 0 else batch_size
@@ -103,7 +114,8 @@ def train_coreset_run(
             "warmup_epochs": warmup_epochs,
             "total_epochs": total_epochs,
             "learning_rate": lr,
-            "effective_batch_size": effective_batch_size
+            "effective_batch_size": effective_batch_size,
+            "selection_time_sec": selection_time
         }, f, indent=2, ensure_ascii=False)
 
     # 6. Vòng lặp huấn luyện từ epoch 21 đến total_epochs
@@ -148,7 +160,8 @@ def train_coreset_run(
             "test_accuracy": round(test_acc, 2),
             "test_macro_f1": round(test_f1, 4),
             "epoch_time_sec": round(epoch_time, 2),
-            "cumulative_time_sec": round(time.time() - total_start_time, 2)
+            "cumulative_time_sec": round(time.time() - total_start_time, 2),
+            "selection_time_sec": selection_time
         }
         history.append(row_metric)
 
@@ -165,7 +178,8 @@ def train_coreset_run(
             "scheduler_state_dict": scheduler.state_dict(),
             "random_states": get_random_states(),
             "history": history,
-            "best_acc": max(best_acc, test_acc)
+            "best_acc": max(best_acc, test_acc),
+            "selection_time_sec": selection_time
         }
         save_checkpoint(ckpt_state, run_dir, filename="latest.pth")
 
@@ -184,7 +198,8 @@ def train_coreset_run(
         "model_state_dict": model.state_dict(),
         "final_test_acc": test_acc,
         "final_macro_f1": test_f1,
-        "best_acc": best_acc
+        "best_acc": best_acc,
+        "selection_time_sec": selection_time
     }, final_pth)
 
     print(f"\n✅ Hoàn thành lượt chạy {run_name}!")
