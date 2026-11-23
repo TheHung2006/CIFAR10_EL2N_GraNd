@@ -27,14 +27,41 @@ def get_random_states():
 
 def set_random_states(states):
     """Khôi phục trạng thái ngẫu nhiên từ checkpoint."""
-    if "python_random" in states:
-        random.setstate(states["python_random"])
-    if "numpy_random" in states:
-        np.random.set_state(states["numpy_random"])
-    if "torch_random" in states:
-        torch.set_rng_state(states["torch_random"])
-    if "torch_cuda_random" in states and torch.cuda.is_available():
-        torch.cuda.set_rng_state_all(states["torch_cuda_random"])
+    if not states:
+        return
+
+    try:
+        if "python_random" in states:
+            random.setstate(states["python_random"])
+    except Exception as e:
+        pass
+
+    try:
+        if "numpy_random" in states:
+            np.random.set_state(states["numpy_random"])
+    except Exception as e:
+        pass
+
+    try:
+        if "torch_random" in states:
+            rng_state = states["torch_random"]
+            if isinstance(rng_state, torch.Tensor):
+                rng_state = rng_state.cpu().to(torch.uint8)
+            torch.set_rng_state(rng_state)
+    except Exception as e:
+        pass
+
+    try:
+        if "torch_cuda_random" in states and torch.cuda.is_available():
+            cuda_states = states["torch_cuda_random"]
+            if isinstance(cuda_states, list):
+                cuda_states = [
+                    s.cpu().to(torch.uint8) if isinstance(s, torch.Tensor) else s
+                    for s in cuda_states
+                ]
+            torch.cuda.set_rng_state_all(cuda_states)
+    except Exception as e:
+        pass
 
 def save_checkpoint(state, save_dir, filename="latest.pth"):
     """Lưu checkpoint đầy đủ trạng thái huấn luyện."""
