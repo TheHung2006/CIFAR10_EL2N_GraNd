@@ -51,7 +51,10 @@ def load_checkpoint(filepath, model, optimizer=None, scheduler=None, device="cpu
     if not os.path.isfile(filepath):
         raise FileNotFoundError(f"Không tìm thấy checkpoint: {filepath}")
 
-    checkpoint = torch.load(filepath, map_location=device)
+    try:
+        checkpoint = torch.load(filepath, map_location=device, weights_only=False)
+    except TypeError:
+        checkpoint = torch.load(filepath, map_location=device)
     model.load_state_dict(checkpoint["model_state_dict"])
 
     if optimizer is not None and "optimizer_state_dict" in checkpoint:

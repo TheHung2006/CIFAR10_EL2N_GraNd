@@ -53,7 +53,10 @@ def run_all_experiments(
 
                 # Kiểm tra xem lượt chạy này đã hoàn thành trước đó chưa
                 if os.path.exists(final_pth):
-                    ckpt = torch.load(final_pth, map_location="cpu")
+                    try:
+                        ckpt = torch.load(final_pth, map_location="cpu", weights_only=False)
+                    except TypeError:
+                        ckpt = torch.load(final_pth, map_location="cpu")
                     if ckpt.get("epoch", 0) >= total_epochs:
                         print(f"\n[Bỏ qua] Lượt chạy {run_name} ({run_idx}/{total_runs}) đã hoàn thành đủ {total_epochs} epoch từ trước!")
                         continue
@@ -81,7 +84,10 @@ def run_all_experiments(
 
                 # Đọc kết quả từ final.pth để cập nhật vào summary_results.csv
                 if os.path.exists(final_pth):
-                    ckpt = torch.load(final_pth, map_location="cpu")
+                    try:
+                        ckpt = torch.load(final_pth, map_location="cpu", weights_only=False)
+                    except TypeError:
+                        ckpt = torch.load(final_pth, map_location="cpu")
                     best_acc = ckpt.get("best_acc", ckpt.get("final_test_acc", 0.0))
                     final_acc = ckpt.get("final_test_acc", 0.0)
                     final_f1 = ckpt.get("final_macro_f1", 0.0)

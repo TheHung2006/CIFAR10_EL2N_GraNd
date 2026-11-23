@@ -78,7 +78,10 @@ def train_coreset_run(
     if not os.path.exists(warmup_pth):
         raise FileNotFoundError(f"Không tìm thấy checkpoint warm-up: {warmup_pth}")
 
-    warmup_ckpt = torch.load(warmup_pth, map_location=device)
+    try:
+        warmup_ckpt = torch.load(warmup_pth, map_location=device, weights_only=False)
+    except TypeError:
+        warmup_ckpt = torch.load(warmup_pth, map_location=device)
     model.load_state_dict(warmup_ckpt["model_state_dict"])
     print(f"✓ Đã nạp thành công trọng số warm-up epoch {warmup_epochs} từ {warmup_pth}")
 
