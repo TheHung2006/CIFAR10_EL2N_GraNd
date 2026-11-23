@@ -1,0 +1,22 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+
+# Dữ liệu CIFAR-10 tải về (không đẩy lên Git)
+data/
+*.tar.gz
+
+# Checkpoints và file kết quả nặng
+results/checkpoints/
+results/warmup/*.pth
+results/scores/*.npy
+results/coresets/*.npy
+*.pth
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
