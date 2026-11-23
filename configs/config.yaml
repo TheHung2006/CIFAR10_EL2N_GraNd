@@ -1,0 +1,26 @@
+project_name: "CIFAR10_EL2N_GraNd"
+
+dataset:
+  name: "CIFAR10"
+  data_dir: "./data"
+  num_classes: 10
+  batch_size: 128
+  num_workers: 2
+
+experiment:
+  seeds: [42, 43, 44]
+  coreset_ratios: [0.01, 0.03, 0.05, 0.10] # 500, 1500, 2500, 5000 ảnh
+  warmup_epochs: 20
+  total_epochs: 150
+  learning_rate: 0.1
+  momentum: 0.9
+  weight_decay: 0.0005
+
+paths:
+  results_dir: "./results"
+  checkpoints_dir: "./results/checkpoints"
+  warmup_dir: "./results/warmup"
+  scores_dir: "./results/scores"
+  coresets_dir: "./results/coresets"
+  logs_dir: "./results/logs"
+  figures_dir: "./results/figures"
